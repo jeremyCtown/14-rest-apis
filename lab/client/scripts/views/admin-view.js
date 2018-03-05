@@ -14,6 +14,7 @@ var app = app || {};
       let token = event.target.passphrase.value;
 
       // COMMENT: Is the token cleared out of local storage? Do you agree or disagree with this structure?
+      // I think this probably works just fine but if its not best practice then I would like to see other structures that are.
       $.get(`${__API_URL__}/api/v1/admin`, {token})
         .then(res => {
           localStorage.token = true;

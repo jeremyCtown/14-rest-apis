@@ -14,6 +14,7 @@ const CLIENT_URL = process.env.CLIENT_URL;
 const TOKEN = process.env.TOKEN;
 
 // COMMENT: Explain the following line of code. What is the API_KEY? Where did it come from?
+// This is the API KEY that came from google to access their library of books. Setting it as a constant ensures its never changed by another line of code.
 const API_KEY = process.env.GOOGLE_API_KEY;
 
 // Database Setup
@@ -31,24 +32,29 @@ app.get('/api/v1/books/find', (req, res) => {
   let url = 'https://www.googleapis.com/books/v1/volumes';
 
   // COMMENT: Explain the following four lines of code. How is the query built out? What information will be used to create the query?
+  // This is saying that if the req.query has that particulr property, add it to the query. Otherwise, do nothing.
   let query = ''
   if(req.query.title) query += `+intitle:${req.query.title}`;
   if(req.query.author) query += `+inauthor:${req.query.author}`;
   if(req.query.isbn) query += `+isbn:${req.query.isbn}`;
 
   // COMMENT: What is superagent? How is it being used here? What other libraries are available that could be used for the same purpose?
+  //Superagent is middleware for handling AJAX calls to RESTFUL APIs. Other libraries include Axios and Fetch API.
   superagent.get(url)
     .query({'q': query})
     .query({'key': API_KEY})
     .then(response => response.body.items.map((book, idx) => {
 
       // COMMENT: The line below is an example of destructuring. Explain destructuring in your own words.
+      //Destructuring is setting the query properties to the same base that will be used to reference the db
       let { title, authors, industryIdentifiers, imageLinks, description } = book.volumeInfo;
 
       // COMMENT: What is the purpose of the following placeholder image?
+      //Serves as the book cover image in the event there is not an image URL in the db already
       let placeholderImage = 'http://www.newyorkpaddy.com/images/covers/NoCoverAvailable.jpg';
 
       // COMMENT: Explain how ternary operators are being used below.
+      // If there's a {{property}} return the {{property}}. Else, return "no {{property}} available"
       return {
         title: title ? title : 'No title available',
         author: authors ? authors[0] : 'No authors available',
@@ -63,6 +69,7 @@ app.get('/api/v1/books/find', (req, res) => {
 })
 
 // COMMENT: How does this route differ from the route above? What does ':isbn' refer to in the code below?
+// This route is looking for a single book by isbn, and is related to the Book.findOne method in book.js. The route above is for returning a general query. Isbn in the code below is being used as the specific input from the user that the query is looking for.
 app.get('/api/v1/books/find/:isbn', (req, res) => {
   let url = 'https://www.googleapis.com/books/v1/volumes';
   superagent.get(url)
@@ -100,10 +107,10 @@ app.post('/api/v1/books', bodyParser, (req, res) => {
   let {title, author, isbn, image_url, description} = req.body;
   client.query(`
     INSERT INTO books(title, author, isbn, image_url, description) VALUES($1, $2, $3, $4, $5)`,
-    [title, author, isbn, image_url, description]
+  [title, author, isbn, image_url, description]
   )
-  .then(results => res.sendStatus(201))
-  .catch(console.error);
+    .then(results => res.sendStatus(201))
+    .catch(console.error);
 });
 
 app.put('/api/v1/books/:id', bodyParser, (req, res) => {
@@ -112,16 +119,16 @@ app.put('/api/v1/books/:id', bodyParser, (req, res) => {
     UPDATE books
     SET title=$1, author=$2, isbn=$3, image_url=$4, description=$5
     WHERE book_id=$6`,
-    [title, author, isbn, image_url, description, req.params.id]
+  [title, author, isbn, image_url, description, req.params.id]
   )
-  .then(() => res.sendStatus(204))
-  .catch(console.error)
+    .then(() => res.sendStatus(204))
+    .catch(console.error)
 })
 
 app.delete('/api/v1/books/:id', (req, res) => {
   client.query('DELETE FROM books WHERE book_id=$1', [req.params.id])
-  .then(() => res.sendStatus(204))
-  .catch(console.error);
+    .then(() => res.sendStatus(204))
+    .catch(console.error);
 });
 
 app.get('*', (req, res) => res.redirect(CLIENT_URL));
